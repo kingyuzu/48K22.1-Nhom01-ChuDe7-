@@ -1,0 +1,158 @@
+<!-- Form Export Template Class Prefix `fe` -->
+<div class="card mt-3 no-print fe-form">
+    <!-- Header & Actions -->
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5>
+            Export <span class="fe-index">{{ index }}</span>
+        </h5>
+        <div class="btn btn-outline-danger fe-delete-count">
+            <i class="fa-solid fa-trash"></i>
+        </div>
+    </div>
+    <!-- Form Content -->
+    <div class="card-body">
+        <div class="d-flex gap-4 no-print">
+            <!-- General Information -->
+            <div class="flex-fill">
+                <!-- Recipient Name -->
+                <div class="mb-3">
+                    <label for="fe-recipient-name-{{ index }}" class="form-label">
+                        Recipient Name
+                        <span class="text-danger">*</span>
+                    </label>
+                    <input type="text"
+                           class="form-control"
+                           id="fe-recipient-name-{{ index }}"
+                           name="{{ form.prefix }}-recipient_name" />
+                    {% if form.recipient_name.errors %}<span class="text-danger">{{ form.recipient_name.errors.0 }}</span>{% endif %}
+                </div>
+                <!-- Recipient Contact -->
+                <div class="mb-3">
+                    <div class="mb-3">
+                        <label for="fe-recipient-contact-{{ index }}" class="form-label">
+                            Recipient Contact
+                            <span class="text-danger">*</span>
+                        </label>
+                        <input type="text"
+                               class="form-control"
+                               id="fe-recipient-contact-{{ index }}"
+                               name="{{ form.prefix }}-recipient_contact" />
+                        {% if form.recipient_contact.errors %}
+                            <span class="text-danger">{{ form.recipient_contact.errors.0 }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <!-- Product List -->
+                <div class="mb-3">
+                    <label for="fe-product-{{ index }}" class="form-label">
+                        Product
+                        <span class="text-danger">*</span>
+                    </label>
+                    <input class="form-control"
+                           list="fe-product-datalist-{{ index }}"
+                           id="fe-product-{{ index }}"
+                           name="{{ form.prefix }}-products"
+                           placeholder="Type to search...">
+                    <datalist id="fe-product-datalist-{{ index }}">
+                        {% for product in form.products.field.queryset %}
+                            <option value="{{ product.product_id }}"
+                                    data-product='{ "id": {{ product.product_id }}, "sku": "{{ product.sku }}", "name": "{{ product.name }}", "unit": "{{ product.unit }}", "price": "{{ product.price }}"}'>
+                                {{ product }}
+                            </option>
+                        {% endfor %}
+                    </datalist>
+                    {% if form.products.errors %}<span class="text-danger">{{ form.products.errors.0 }}</span>{% endif %}
+                </div>
+                <!-- Note -->
+                <div class="mb-3">
+                    <label for="fe-note-{{ index }}" class="form-label">Note</label>
+                    <textarea class="form-control"
+                              id="fe-note-{{ index }}"
+                              rows="3"
+                              name="{{ form.prefix }}-note"></textarea>
+                </div>
+            </div>
+            <!-- Payment & Price -->
+            <div class="flex-fill">
+                <!-- Payment Select -->
+                <div class="mb-3">
+                    <label for="fe-payment-{{ index }}" class="form-label">Payment</label>
+                    <select class="form-select"
+                            aria-label="Default select example"
+                            id="fe-payment-{{ index }}"
+                            name="{{ form.prefix }}-payments">
+                        {% for payment in payments %}<option value="{{ payment.0 }}">{{ payment.1 }}</option>{% endfor %}
+                    </select>
+                </div>
+                <!-- Quantity -->
+                <div class="mb-3">
+                    <label for="fe-quantity-{{ index }}" class="form-label">Quantity</label>
+                    <input type="number"
+                           class="form-control"
+                           id="fe-quantity-{{ index }}"
+                           value="1"
+                           min="1"
+                           name="{{ form.prefix }}-quantity" />
+                    {% if form.quantity.errors %}<span class="text-danger">{{ form.quantity.errors.0 }}</span>{% endif %}
+                </div>
+                <!-- Export Price -->
+                <div class="mb-3">
+                    <label for="fe-export-price-{{ index }}" class="form-label">Export Price</label>
+                    <input type="number"
+                           class="form-control"
+                           id="fe-export-price-{{ index }}"
+                           value="0"
+                           min="0"
+                           name="{{ form.prefix }}-export_price" />
+                    {% if form.export_price.errors %}<span class="text-danger">{{ form.export_price.errors.0 }}</span>{% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script id="fe-{{ form.prefix }}-script">
+    function feGetProducts() {
+        const datalist = document.getElementById("fe-product-datalist-{{ index }}");
+        return Array.from(datalist.options).map((option) => JSON.parse(option.dataset.product));
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        // Get the index of form
+        const formIndex = parseInt("{{ index }}");
+
+        // Elements
+        const recipientNameInput = document.getElementById("fe-recipient-name-{{ index }}");
+        const recipientContactInput = document.getElementById("fe-recipient-contact-{{ index }}");
+        const productInput = document.getElementById("fe-product-{{ index }}");
+        const exportPriceInput = document.getElementById("fe-export-price-{{ index }}");
+        const quantityInput = document.getElementById("fe-quantity-{{ index }}");
+
+        // Initiate the form summary
+        feInitSummaryRow(formIndex, '-', '-', '', '', '-', 1, 0);
+
+        // Recipient Name Binding
+        recipientNameInput.addEventListener("input", () => {
+            feUpdateSummaryRow({ id: formIndex, recipientName: recipientNameInput.value });
+        });
+
+        // Recipient Contact Binding
+        recipientContactInput.addEventListener("input", () => {
+            feUpdateSummaryRow({ id: formIndex, recipientContact: recipientContactInput.value });
+        });
+
+        // Product Binding
+        productInput.addEventListener("input", () => {
+            const product = feGetProducts().find((product) => product.id === parseInt(productInput.value));
+            if (product) {
+                feUpdateSummaryRow({ id: formIndex, sku: product.sku, name: product.name, unit: product.unit, quantity: parseInt(quantityInput.value), exportPrice: product.price });
+                exportPriceInput.value = product.price;
+            }
+        });
+
+        // Quantity Binding
+        quantityInput.addEventListener("input", () => {
+            const product = feGetProducts().find((product) => product.id === parseInt(productInput.value));
+            feUpdateSummaryRow({ id: formIndex, quantity: parseInt(quantityInput.value), exportPrice: product.price });
+        });
+    });
+</script>

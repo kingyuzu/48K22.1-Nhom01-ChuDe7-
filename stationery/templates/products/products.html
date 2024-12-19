@@ -1,0 +1,247 @@
+{% extends 'base.html' %}
+{% block username %}{{ user.username }}{% endblock %}
+{% block content %}
+  <!-- Style -->
+  <style>
+    .form-width {
+      width: 16rem;
+    }
+    .pointer-cursor {
+      cursor: pointer;
+    }
+  </style>
+  {% if out_of_stock_messages %}
+    <div class="alert alert-danger d-flex align-items-center gap-2">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <div class="d-flex flex-column">
+        {% for message in out_of_stock_messages %}<span>{{ message }}</span>{% endfor %}
+      </div>
+    </div>
+  {% endif %}
+  <div class="d-flex w-100 gap-3">
+    <!-- Sidebar -->
+    <form class="form-width">
+      <div class="accordion" id="accordionPanelsStayOpenExample">
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#panelsStayOpen-collapseOne"
+                    aria-expanded="true"
+                    aria-controls="panelsStayOpen-collapseOne">Category</button>
+          </h2>
+          <div id="panelsStayOpen-collapseOne"
+               class="accordion-collapse collapse show"
+               data-bs-parent="#accordionPanelsStayOpenExample">
+            <div class="accordion-body">
+              {% if categories %}
+                {% for category in categories %}
+                  <div class="form-check">
+                    <input class="form-check-input form-category-filter"
+                           type="checkbox"
+                           id="filter-{{ category.category_id }}"
+                           {% if category.category_id in category_filter %}checked{% endif %} />
+                    <label class="form-check-label" for="filter-{{ category.category_id }}">{{ category.name }}</label>
+                  </div>
+                {% endfor %}
+              {% else %}
+                <span>No categories found</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#panelsStayOpen-collapseTwo"
+                    aria-expanded="true"
+                    aria-controls="panelsStayOpen-collapseTwo">Stock</button>
+          </h2>
+          <div id="panelsStayOpen-collapseTwo"
+               class="accordion-collapse collapse show"
+               data-bs-parent="#accordionPanelsStayOpenExample">
+            <div class="accordion-body">
+              <div class="form-check">
+                <input class="form-check-input form-stock-filter"
+                       type="radio"
+                       name="flexRadioDefault"
+                       id="filter-stock-all"
+                       {% if stock_status == 0 %}checked{% endif %} />
+                <label class="form-check-label" for="filter-stock-all">All</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input form-stock-filter"
+                       type="radio"
+                       name="flexRadioDefault"
+                       id="filter-in-stock"
+                       {% if stock_status == 1 %}checked{% endif %} />
+                <label class="form-check-label" for="filter-in-stock">In stock</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input form-stock-filter"
+                       type="radio"
+                       name="flexRadioDefault"
+                       id="filter-out-of-stock"
+                       {% if stock_status == 2 %}checked{% endif %} />
+                <label class="form-check-label" for="filter-out-of-stock">Out of stock</label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- <button type="submit" class="btn btn-link">Apply filter</button> -->
+    </form>
+    <!-- Table -->
+    <div class="flex-fill">
+      <div class="d-flex justify-content-between align-items-center">
+        <h4>Product</h4>
+        <div class="d-flex align-items-center gap-2">
+          <a href="/products/stocks/" class="btn btn-warning">
+            <i class="fa-solid fa-cubes-stacked"></i>
+            <span>Stock Management</span>
+          </a>
+          <!-- <span>
+            <input type="text" class="form-control" placeholder="Search" />
+          </span> -->
+          <a href="/imports/add/" class="btn btn-outline-primary">
+            <i class="fa-solid fa-plus"></i>
+            <span>Import</span>
+          </a>
+          <a href="/exports/add/" class="btn btn-outline-primary">
+            <i class="fa-solid fa-minus"></i>
+            <span>Export</span>
+          </a>
+          {% if user.role != 'user' %}
+            <a class="btn btn-primary" href="/products/add/">
+              <i class="fa-solid fa-plus"></i>
+              <span>Add</span>
+            </a>
+          {% endif %}
+        </div>
+      </div>
+      <table class="table table-hover pointer-cursor">
+        <thead>
+          <tr>
+            <th scope="col">SKU</th>
+            <th scope="col">Name</th>
+            <th scope="col">Unit</th>
+            <th scope="col">Stock</th>
+            <th scope="col">Price</th>
+            <th scope="col">Category</th>
+            <th scope="col">Aisle</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for product in products %}
+            <tr class="{% if product.stock <= product.min_stock %}table-danger{% endif %}"
+                onclick="window.location='/products/{{ product.id }}/'">
+              <td>{{ product.sku }}</td>
+              <td>{{ product.name }}</td>
+              <td>{{ product.unit }}</td>
+              <td>{{ product.stock }}</td>
+              <td>{{ product.price }}</td>
+              <td>{{ product.category }}</td>
+              <td>{{ product.aisle }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <nav aria-label="Pagination">
+        <ul class="pagination" data-page="{{ page }}">
+          <li class="page-item {% if page == 1 %}disabled{% endif %}">
+            <a class="page-link pointer-cursor" id="pagination-prev">
+              <i class="fa-solid fa-chevron-left"></i>
+            </a>
+          </li>
+          {% for i in paginator.page_range %}
+            <li class="page-item">
+              <a class="page-link {% if i == page %}active{% endif %} pagination-items pointer-cursor">{{ i }}</a>
+            </li>
+          {% endfor %}
+          <li class="page-item {% if page == paginator.num_pages %}disabled{% endif %}">
+            <a class="page-link pointer-cursor" id="pagination-next">
+              <i class="fa-solid fa-chevron-right"></i>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+  <!-- JS -->
+  <script>
+    // Get current filters
+    const currentFilters = new URLSearchParams(window.location.search);
+    function getQueryParams(queryKey, queryValue) {
+      const queryParams = new URLSearchParams();
+      for (const [key, value] of currentFilters) {
+        if (key !== queryKey) {
+          queryParams.append(key, value);
+        }
+      }
+      if (queryValue) {
+        queryParams.append(queryKey, queryValue);
+      }
+      return queryParams.toString();
+    }
+
+    // DOMContentLoaded
+    document.addEventListener("DOMContentLoaded", () => {
+      // Category filter
+      const categoryFilter = document.querySelectorAll('.form-category-filter');
+      categoryFilter.forEach((filter) => {
+        filter.addEventListener('change', () => {
+          const categoryIds = [];
+          categoryFilter.forEach((filter) => {
+            if (filter.checked) {
+              categoryIds.push(filter.id.split('-')[1]);
+            }
+          });
+          if (categoryIds.length === 0) {
+            window.location = `/products/?${getQueryParams('category')}`;
+          } else {
+            window.location = `/products/?${getQueryParams('category', categoryIds.join(','))}`;
+          }
+        });
+      })
+
+      // Stock filter
+      const stockFilter = document.querySelectorAll('.form-stock-filter');
+      stockFilter.forEach((filter) => {
+        filter.addEventListener('change', () => {
+          let stockStatus = 0;
+          if (filter.id === 'filter-in-stock') {
+            stockStatus = 1;
+          } else if (filter.id === 'filter-out-of-stock') {
+            stockStatus = 2;
+          }
+          window.location = `/products/?${getQueryParams('stock', stockStatus)}`;
+        });
+      });
+
+      // Pagination
+      const pagination = document.querySelector('.pagination');
+      const paginationPrev = document.getElementById('pagination-prev');
+      const paginationNext = document.getElementById('pagination-next');
+      const paginationItems = document.querySelectorAll('.pagination-items');
+      paginationItems.forEach((item) => {
+        item.addEventListener('click', () => {
+          window.location = `/products/?${getQueryParams('page', item.textContent)}`;
+        });
+      });
+      paginationPrev.addEventListener('click', () => {
+        // Get current page
+        const currentPage = parseInt(pagination.dataset.page);
+        window.location = `/products/?${getQueryParams('page', currentPage - 1)}`;
+      });
+      paginationNext.addEventListener('click', () => {
+        // Get current page
+        const currentPage = parseInt(pagination.dataset.page);
+        window.location = `/products/?page=${currentPage + 1}`;
+      });
+
+    })
+  </script>
+{% endblock %}

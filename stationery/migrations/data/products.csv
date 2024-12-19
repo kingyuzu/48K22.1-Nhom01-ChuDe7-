@@ -1,0 +1,21 @@
+sku,name,unit,min_stock,category_id,amount
+G-A4-70gsm,Giấy A4 Định Lượng 70gsm,Hộp,20,1,780
+G-A4-80gsm,Giấy A4 Định Lượng 80gsm,Hộp,20,1,890
+G-NOTE-001,Giấy Note Dán Nhiều Màu,Cuốn,10,1,320
+G-DECAL-01,Giấy Decal A4,Tờ,10,1,280
+B-PEN-001,Bút Bi Thiên Long Mực Xanh,Cây,10,2,970
+B-PEN-002,Bút Bi Thiên Long Mực Đen,Cây,10,2,760
+B-PEN-003,Bút Dạ Quang Vàng,Cây,10,2,450
+B-PEN-004,Bút Dạ Quang Xanh,Cây,10,2,650
+S-NOTE-A5,Sổ Tay Lò Xo A5,Cuốn,15,3,890
+S-NOTE-A4,Sổ Tay Lò Xo A4,Cuốn,10,3,540
+S-NOTE-B5,Sổ Tay B5 Bìa Cứng,Cuốn,10,3,650
+S-NOTE-C5,Sổ Tay C5 Lò Xo,Cuốn,10,3,450
+ST-CLIP-01,Kẹp Giấy Inox,Hộp,10,4,690
+ST-CLIP-02,Kẹp Giấy Nhựa,Hộp,10,4,450
+E-STPL-02,Bấm Kim Số 10,Cái,10,4,350
+E-STPL-03,Bấm Kim Số 3,Cái,10,4,350
+O-LAMP-01,Đèn Bàn Văn Phòng,Cái,5,5,250
+O-CHAIR-01,Ghế Xoay Văn Phòng,Cái,3,5,150
+O-DESK-01,Bàn Làm Việc Gỗ,Cái,1,5,170
+O-SHELF-01,Kệ Sách Văn Phòng,Cái,2,5,290

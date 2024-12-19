@@ -1,0 +1,132 @@
+<table class="table" id="fe-summary-table">
+    <thead>
+        <tr>
+            <th scope="col">SKU</th>
+            <th scope="col">Name</th>
+            <th scope="col">Recipient Name</th>
+            <th scope="col">Recipient Contact</th>
+            <th scope="col">Unit</th>
+            <th scope="col">Quantity</th>
+            <th scope="col">Export Price</th>
+            <th scope="col">Total Price</th>
+        </tr>
+    </thead>
+    <tbody class="table-group-divider" id="fe-summary-body">
+    </tbody>
+    <!-- Summary -->
+    <tr id="fe-summary-total" class="table-dark">
+        <td colspan="5">
+            <strong>Summary</strong>
+        </td>
+        <td id="fe-summary-total-quantity" colspan="2">0</td>
+        <td>
+            <span id="fe-summary-total-price">0</span>
+        </td>
+    </tr>
+</table>
+<script>
+// Format price
+function feFormatPrice(price) {
+    return new Intl.NumberFormat("vi-VN", {
+        style: "currency",
+        currency: "VND",
+    }).format(price);
+}
+
+// Add Summary Row Handler
+function feInitSummaryRow(
+    id,
+    sku,
+    name,
+    recipientName,
+    recipientContact,
+    unit,
+    quantity,
+    exportPrice,
+) {
+    const summaryBody = document.getElementById("fe-summary-body");
+
+    // Create Row
+    const row = document.createElement("tr");
+    row.setAttribute("id", "fe-summary-row-" + id);
+    row.innerHTML = `
+        <td>${sku}</td>
+        <td>${name}</td>
+        <td>${recipientName}</td>
+        <td>${recipientContact}</td>
+        <td>${unit}</td>
+        <td>${quantity}</td>
+        <td>${feFormatPrice(exportPrice)}</td>
+        <td>${feFormatPrice(quantity * exportPrice)}</td>
+    `;
+    summaryBody.appendChild(row);
+}
+
+// Update Row Handler
+function feUpdateSummaryRow({
+    id,
+    sku,
+    name,
+    recipientName,
+    recipientContact,
+    unit,
+    quantity,
+    exportPrice,
+}) {
+    const summaryBody = document.getElementById("fe-summary-body");
+
+    // Update Row
+    if (id) {
+        // Get Id Row
+        const row = document.getElementById("fe-summary-row-" + id);
+
+        // Update Data
+        if (sku) row.children[0].textContent = sku;
+        if (name) row.children[1].textContent = name;
+        if (recipientName) row.children[2].textContent = recipientName;
+        if (recipientContact) row.children[3].textContent = recipientContact;
+        if (unit) row.children[4].textContent = unit;
+        if (quantity) row.children[5].textContent = quantity;
+        if (exportPrice) row.children[6].textContent = feFormatPrice(exportPrice);
+        if (quantity && exportPrice) row.children[7].textContent = feFormatPrice(quantity * exportPrice);
+    }
+}
+
+// Observe changed in summary body
+document.addEventListener("DOMContentLoaded", () => {
+    const observedNode = document.getElementById("fe-summary-body");
+    const summaryBody = document.getElementById("fe-summary-body");
+    const summaryTotal = document.getElementById("fe-summary-total");
+
+    const observer = new MutationObserver((mutationList, observer) => {
+        // Iterate through mutations
+        mutationList.forEach((mutation) => {
+            if (mutation.type == "childList") {
+                // Get all rows
+                const rows = summaryBody.querySelectorAll('tr')
+                let totalQuantity = 0;
+                let totalPrice = 0;
+                // Calculate total quantity and total price
+                rows.forEach((row) => {
+                    const quantityCell = row.cells[5]; // 6th column (Quantity)
+                    const totalPriceCell = row.cells[7]; // 8th column (Total Price)
+
+                    if (quantityCell && totalPriceCell) {
+                        // Parse quantity and total price
+                        const quantity = parseInt(quantityCell.textContent.trim() || '0', 10);
+                        const price = parseFloat(totalPriceCell.textContent.trim().replace(/[^0-9.]/g, '') || '0') * 1000;
+
+                        totalQuantity += quantity;
+                        totalPrice += price;
+                    }
+                });
+                // Update total
+                summaryTotal.querySelector("#fe-summary-total-quantity").textContent = totalQuantity;
+                summaryTotal.querySelector("#fe-summary-total-price").textContent = feFormatPrice(totalPrice);
+            }
+        })
+    })
+
+    observer.observe(observedNode, { childList: true, subtree: true });
+})
+</script>

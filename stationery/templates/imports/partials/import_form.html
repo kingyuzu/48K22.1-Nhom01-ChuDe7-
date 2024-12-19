@@ -1,0 +1,147 @@
+<!-- Form Import Template Class Prefix `fi` -->
+<div class="card mt-3 no-print fi-form">
+    <!-- Header & Actions -->
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5>
+            Import <span class="fi-index">{{ index }}</span>
+        </h5>
+        <div class="btn btn-outline-danger fi-delete-count">
+            <i class="fa-solid fa-trash"></i>
+        </div>
+    </div>
+    <!-- Form Content -->
+    <div class="card-body">
+        <div class="d-flex gap-4 no-print">
+            <!-- General Information -->
+            <div class="flex-fill">
+                <!-- Supplier -->
+                <div class="mb-3">
+                    <label for="fi-supplier-{{ index }}" class="form-label">Supplier</label>
+                    <select class="form-select"
+                            id="fi-supplier-{{ index }}"
+                            name="{{ form.prefix }}-suppliers">
+                        {% for supplier in form.suppliers.field.queryset %}
+                            <option value="{{ supplier.supplier_id }}"
+                                    data-supplier='{ "id": "{{ supplier.supplier_id }}", "name": "{{ supplier.name }}" }'>
+                                {{ supplier.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <!-- Product List -->
+                <div class="mb-3">
+                    <label for="fi-product-{{ index }}" class="form-label">
+                        Product
+                        <span class="text-danger">*</span>
+                    </label>
+                    <input class="form-control"
+                           list="fi-product-datalist-{{ index }}"
+                           id="fi-product-{{ index }}"
+                           name="{{ form.prefix }}-products"
+                           placeholder="Type to search...">
+                    <datalist id="fi-product-datalist-{{ index }}">
+                        {% for product in form.products.field.queryset %}
+                            <option value="{{ product.product_id }}"
+                                    data-product='{ "id": {{ product.product_id }}, "sku": "{{ product.sku }}", "name": "{{ product.name }}", "unit": "{{ product.unit }}", "price": "{{ product.price }}" }'>
+                                {{ product }}
+                            </option>
+                        {% endfor %}
+                    </datalist>
+                    {% if form.products.errors %}<span class="text-danger">{{ form.products.errors.0 }}</span>{% endif %}
+                </div>
+                <!-- Note -->
+                <div class="mb-3">
+                    <label for="fi-note-{{ index }}" class="form-label">Note</label>
+                    <textarea class="form-control"
+                              id="fi-note-{{ index }}"
+                              rows="3"
+                              name="{{ form.prefix }}-note"></textarea>
+                </div>
+            </div>
+            <!-- Payment & Price -->
+            <div class="flex-fill">
+                <!-- Payment Select -->
+                <div class="mb-3">
+                    <label for="fi-payment-{{ index }}" class="form-label">Payment</label>
+                    <select class="form-select"
+                            aria-label="Default select example"
+                            id="fi-payment-{{ index }}"
+                            name="{{ form.prefix }}-payments">
+                        {% for payment in payments %}<option value="{{ payment.0 }}">{{ payment.1 }}</option>{% endfor %}
+                    </select>
+                </div>
+                <!-- Quantity -->
+                <div class="mb-3">
+                    <label for="fi-quantity-{{ index }}" class="form-label">Quantity</label>
+                    <input type="number"
+                           class="form-control"
+                           id="fi-quantity-{{ index }}"
+                           value="1"
+                           min="1"
+                           name="{{ form.prefix }}-quantity" />
+                    {% if form.quantity.errors %}<span class="text-danger">{{ form.quantity.errors.0 }}</span>{% endif %}
+                </div>
+                <!-- Import Price -->
+                <div class="mb-3">
+                    <label for="fi-import-price-{{ index }}" class="form-label">Import Price</label>
+                    <input type="number"
+                           class="form-control"
+                           id="fi-import-price-{{ index }}"
+                           value="0"
+                           min="0"
+                           name="{{ form.prefix }}-import_price" />
+                    {% if form.import_price.errors %}<span class="text-danger">{{ form.import_price.errors.0 }}</span>{% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script id="fi-{{ form.prefix }}-script">
+    function fiGetSuppliers() {
+        const datalist = document.getElementById("fi-supplier-{{ index }}");
+        return Array.from(datalist.options).map((option) => JSON.parse(option.dataset.supplier));
+    }
+
+    function fiGetProducts() {
+        const datalist = document.getElementById("fi-product-datalist-{{ index }}");
+        return Array.from(datalist.options).map((option) => JSON.parse(option.dataset.product));
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        // Get the index of form
+        const formIndex = parseInt("{{ index }}");
+
+        // Elements
+        const supplierInput = document.getElementById("fi-supplier-{{ index }}");
+        const productInput = document.getElementById("fi-product-{{ index }}");
+        const importPriceInput = document.getElementById("fi-import-price-{{ index }}");
+        const quantityInput = document.getElementById("fi-quantity-{{ index }}");
+
+        // Initiate the form summary
+        const defaultSupplier = fiGetSuppliers().find((supplier) => supplier.id === supplierInput.value);
+        fiInitSummaryRow(formIndex, '-', '-', defaultSupplier.name, '', 1, 0);
+
+        // Supplier Binding
+        supplierInput.addEventListener("input", () => {
+            const supplier = fiGetSuppliers().find((supplier) => supplier.id === supplierInput.value);
+            if (supplier) {
+                fiUpdateSummaryRow({ id: formIndex, supplier: supplier.name });
+            }
+        });
+
+        // Product Binding
+        productInput.addEventListener("input", () => {
+            const product = fiGetProducts().find((product) => product.id === parseInt(productInput.value));
+            if (product) {
+                fiUpdateSummaryRow({ id: formIndex, sku: product.sku, name: product.name, unit: product.unit, quantity: parseInt(quantityInput.value), importPrice: product.price });
+                importPriceInput.value = product.price;
+            }
+        });
+
+        // Quantity Binding
+        quantityInput.addEventListener("input", () => {
+            const product = fiGetProducts().find((product) => product.id === parseInt(productInput.value));
+            fiUpdateSummaryRow({ id: formIndex, quantity: parseInt(quantityInput.value), importPrice: product.price });
+        });
+    });
+</script>

@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+{% block username %}{{ user.username }}{% endblock %}
+{% block content %}
+    <!-- Style -->
+    <style>
+    .img-style {
+      width: 20rem;
+      height: 20rem;
+      object-fit: cover;
+    }
+    </style>
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="/products/">Products</a>
+            </li>
+            <li class="breadcrumb-item active"
+                aria-current="page"
+                id="breadcrumb-sku">{{ product.sku }}</li>
+        </ol>
+    </nav>
+    <!-- Form -->
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <!-- Heading -->
+        <div class="d-flex justify-content-between">
+            {% if product %}
+                <h2 id="edit-product-title">Edit {{ product.name }}</h2>
+            {% else %}
+                <h2>Add a new product</h2>
+            {% endif %}
+            <div class="d-flex gap-2 align-items-center">
+                <button class="btn btn-light" onclick="window.history.back()" type="button">
+                    <span>Cancel</span>
+                </button>
+                {% if product %}
+                    <button class="btn btn-primary" id="edit-product-btn" type="submit">
+                        <span>Save</span>
+                    </button>
+                {% else %}
+                    <button class="btn btn-primary" id="add-product-btn" type="submit">
+                        <span>Add</span>
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+        <div class="d-flex gap-3">
+            <!-- Image -->
+            <div class="d-flex flex-column w-25">
+                <div class="mb-3">
+                    <label for="product-image" class="form-label">Product image</label>
+                    <input class="form-control"
+                           type="file"
+                           id="product-image"
+                           accept="image/*"
+                           name="{{ form.photo.name }}"
+                           {% if product.photo %}value="{{ product.photo.url }}"{% endif %}>
+                </div>
+                <div class="d-flex flex-column gap-3 align-items-start">
+                    {% if product.photo %}
+                        <img src="{{ product.photo.url }}"
+                             alt="{{ product.name }}"
+                             id="product-image-preview"
+                             class="img-thumbnail img-style"
+                             width="20rem"
+                             height="20rem" />
+                    {% else %}
+                        <img src="https://placehold.co/400?text=No+photo"
+                             alt="{{ product.name }}"
+                             id="product-image-preview"
+                             class="img-thumbnail img-style"
+                             width="20rem"
+                             height="20rem" />
+                    {% endif %}
+                    <button class="btn btn-outline-danger" disabled id="product-image-remove-btn">
+                        <i class="fa-solid fa-trash"></i>
+                        <span>Remove</span>
+                    </button>
+                </div>
+            </div>
+            <!-- Inputs -->
+            <div class="d-flex flex-column flex-fill">
+                <!-- SKU -->
+                <div class="mb-3">
+                    <label for="product-sku" class="form-label">
+                        Product SKU <span class="text-danger">*</span>
+                    </label>
+                    <input type="text"
+                           class="form-control"
+                           id="product-sku"
+                           placeholder="Enter product SKU"
+                           {% if product %}value="{{ product.sku }}"{% endif %}
+                           name="{{ form.sku.name }}" />
+                    {% if form.sku.errors %}<span class="text-danger">{{ form.sku.errors.0 }}</span>{% endif %}
+                </div>
+                <!-- Name -->
+                <div class="mb-3">
+                    <label for="product-name" class="form-label">
+                        Product Name
+                        <span class="text-danger">*</span>
+                    </label>
+                    <input type="text"
+                           class="form-control"
+                           id="product-name"
+                           placeholder="Enter product name"
+                           {% if product %}value="{{ product.name }}"{% endif %}
+                           name="{{ form.name.name }}" />
+                    {% if form.name.errors %}<span class="text-danger">{{ form.name.errors.0 }}</span>{% endif %}
+                </div>
+                <!-- Category -->
+                <div class="mb-3">
+                    <label for="product-category" class="form-label">Product Category</label>
+                    <select class="form-select"
+                            aria-label="Category Select"
+                            id="product-category"
+                            name="{{ form.categories.name }}">
+                        {% for category in form.categories.field.queryset %}
+                            <option value="{{ category.category_id }}"
+                                    {% if product and product.category_id == category %}selected{% endif %}>
+                                {{ category.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <!-- Description -->
+                <div class="mb-3">
+                    <label for="product-description" class="form-label">Product Description</label>
+                    <textarea class="form-control"
+                              id="product-description"
+                              rows="3"
+                              placeholder="Enter product description"
+                              name="{{ form.description.name }}">{% if product %}{{ product.description }}{% endif %}</textarea>
+                </div>
+                <!-- Unit -->
+                <div class="mb-3">
+                    <label for="product-unit" class="form-label">
+                        Product Unit
+                        <span class="text-danger">*</span>
+                    </label>
+                    <input type="text"
+                           class="form-control"
+                           id="product-unit"
+                           placeholder="Enter product unit"
+                           {% if product %}value="{{ product.unit }}"{% endif %}
+                           name="{{ form.unit.name }}" />
+                    {% if form.unit.errors %}<span class="text-danger">{{ form.unit.errors.0 }}</span>{% endif %}
+                </div>
+                <!-- Min Stock -->
+                <div class="mb-3">
+                    <label for="product-min-stock" class="form-label">
+                        Product Min Stock
+                        <span class="text-danger">*</span>
+                    </label>
+                    <input type="number"
+                           class="form-control"
+                           id="product-min-stock"
+                           placeholder="Enter product min stock"
+                           {% if product %}value="{{ product.min_stock }}"{% endif %}
+                           name="{{ form.min_stock.name }}" />
+                    {% if form.min_stock.errors %}<span class="text-danger">{{ form.min_stock.errors.0 }}</span>{% endif %}
+                </div>
+                <!-- Price -->
+                <div class="mb-3">
+                    <label for="product-price" class="form-label">
+                        Product Price
+                        <span class="text-danger">*</span>
+                    </label>
+                    <input type="number"
+                           class="form-control"
+                           id="product-price"
+                           placeholder="Enter product price"
+                           {% if product %}value="{{ product.price }}"{% endif %}
+                           name="{{ form.price.name }}" />
+                    {% if form.price.errors %}<span class="text-danger">{{ form.price.errors.0 }}</span>{% endif %}
+                </div>
+            </div>
+        </div>
+    </form>
+    <!-- JS -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // Image Preview
+            const imageInput = document.getElementById("product-image");
+            const imagePreview = document.getElementById("product-image-preview");
+            const removeButton = document.getElementById("product-image-remove-btn");
+            imageInput.addEventListener("change", () => {
+                const file = imageInput.files[0];
+                const reader = new FileReader();
+                reader.onload = () => {
+                    imagePreview.src = reader.result;
+                };
+                reader.readAsDataURL(file);
+                removeButton.disabled = false;
+            });
+            removeButton.addEventListener("click", () => {
+                imageInput.value = null;
+                imagePreview.src = "https://placehold.co/400?text=No+photo";
+                removeButton.disabled = true;
+            });
+
+            // BreadCrumb real-time update
+            const skuBreadCrumb = document.getElementById("breadcrumb-sku");
+            const skuInput = document.getElementById("product-sku");
+            skuInput.addEventListener("input", () => {
+                skuBreadCrumb.innerText = skuInput.value;
+            });
+
+            // Title real-time update
+            const title = document.getElementById("edit-product-title");
+            if (title) {
+                const nameInput = document.getElementById("product-name");
+                nameInput.addEventListener("input", () => {
+                    title.innerText = `Edit ${nameInput.value}`;
+                });
+            }
+        })
+    </script>
+{% endblock %}

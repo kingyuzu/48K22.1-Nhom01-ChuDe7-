@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block username %}{{ user.username }}{% endblock %}
+{% block content %}
+  <!-- HTML -->
+  <h3>Receiving Receipt</h3>
+  <span class="badge text-bg-primary only-print" id="fi-date-badge"></span>
+  <span class="badge text-bg-primary only-print" id="fi-user-badge">Export by {{ user.first_name }} {{ user.last_name }} <i>@{{ user.username }}</i></span>
+  <!-- Errors Notification -->
+  {% if errors %}
+    <div class="alert alert-danger d-flex align-items-center gap-2">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <span>{{ errors }}</span>
+    </div>
+  {% endif %}
+  <!-- Table -->
+  {% include 'imports/partials/import_summary_table.html' %}
+  <!-- Form -->
+  <form method="post">
+    {% csrf_token %}
+    <!-- List of Form -->
+    <div id="fi-container">
+      {{ forms.management_form }}
+      {% for form in forms %}
+        {% include 'imports/partials/import_form.html' with form=form index=forloop.counter %}
+      {% endfor %}
+    </div>
+    <!-- Action Buttons -->
+    <div class="d-flex justify-content-between no-print mt-3">
+      <div class="d-flex gap-2">
+        <div class="btn btn-light" id="fi-add-count">
+          <i class="fa-solid fa-plus"></i>
+          <span>Add Import</span>
+        </div>
+      </div>
+      <div class="d-flex gap-2">
+        <button class="btn btn-light" id="fi-print">
+          <i class="fa-solid fa-print"></i>
+          <span>Print</span>
+        </button>
+        <a href="/imports/" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn btn-primary">Import</button>
+      </div>
+    </div>
+  </form>
+  <!-- JS -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // Date Badge
+      const dateBadge = document.getElementById("fi-date-badge");
+      dateBadge.innerHTML = new Date().toLocaleDateString();
+
+      // Form Count Modification
+      const addCountBtn = document.getElementById("fi-add-count");
+      const removeCountBtns = document.querySelectorAll(".fi-delete-count");
+      addCountBtn.addEventListener("click", () => {
+        location.href = "/imports/add/?count=" + (document.querySelectorAll(".fi-form").length + 1);
+      });
+      removeCountBtns.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          location.href = "/imports/add/?count=" + (document.querySelectorAll(".fi-form").length - 1);
+        });
+      });
+
+      // Print Button
+      const printBtn = document.getElementById("fi-print");
+      printBtn.addEventListener("click", () => {
+        window.print();
+      });
+    });
+  </script>
+{% endblock %}

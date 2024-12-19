@@ -1,0 +1,213 @@
+{% extends 'base.html' %}
+{% block username %}{{ user.username }}{% endblock %}
+{% block content %}
+  <h2>Stock Report</h2>
+  <!-- Form -->
+  <form class="no-print" method="post">
+    {% csrf_token %}
+    <div class="d-flex gap-3 align-items-center">
+      <div class="mb-3 flex-fill">
+        <label for="report-form-category" class="form-label">Category</label>
+        <select class="form-select"
+                id="report-form-category"
+                name="{{ form.categories.name }}">
+          {% for category in form.categories.field.queryset %}
+            <option value="{{ category.category_id }}">{{ category.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="mb-3 flex-fill">
+        <label for="report-form-start-date" class="form-label">Start Date</label>
+        <input type="date"
+               class="form-control"
+               id="report-form-start-date"
+               name="{{ form.start_date.name }}" />
+        {% if form.start_date.errors %}<span class="text-danger">{{ form.start_date.errors.0 }}</span>{% endif %}
+      </div>
+      <div class="mb-3 flex-fill">
+        <label for="report-form-end-date" class="form-label">End Date</label>
+        <input type="date"
+               class="form-control"
+               id="report-form-end-date"
+               name="{{ form.end_date.name }}" />
+        {% if form.end_date.errors %}<span class="text-danger">{{ form.end_date.errors.0 }}</span>{% endif %}
+      </div>
+      <button type="submit" class="btn btn-primary">Generate Report</button>
+      <button type="button" class="btn btn-light" onclick="window.print()">
+        <i class="fa-solid fa-print"></i>
+        <span>Export Report</span>
+      </button>
+    </div>
+  </form>
+  <div class="d-flex gap-2">
+    <h4>From</h4>
+    <h4 id="start-date-ui">-</h4>
+    <h4>to</h4>
+    <h4 id="end-date-ui">-</h4>
+  </div>
+  <!-- Charts -->
+  <div class="d-flex gap-3 mb-2">
+    {% if stock_before_period %}
+      <div class="card flex-fill">
+        <div class="card-body d-flex flex-column flex-fill align-items-center">
+          <h4 class="text-body-tertiary">Stock begin of period</h4>
+          <h2>
+            {% if stock_before_period > 0 %}
+              <i class="fa-solid fa-arrow-up text-success"></i>
+            {% else %}
+              <i class="fa-solid fa-arrow-down text-danger"></i>
+            {% endif %}
+            {{ stock_before_period }}
+          </h2>
+        </div>
+      </div>
+    {% endif %}
+    {% if stock_after_period %}
+      <div class="card flex-fill">
+        <div class="card-body d-flex flex-column flex-fill align-items-center">
+          <h4 class="text-body-tertiary">Stock end of period</h4>
+          <h2>
+            {% if stock_after_period > 0 %}
+              <i class="fa-solid fa-arrow-up text-success"></i>
+            {% else %}
+              <i class="fa-solid fa-arrow-down text-danger"></i>
+            {% endif %}
+            {{ stock_after_period }}
+          </h2>
+        </div>
+      </div>
+    {% endif %}
+    {% if total_stock_value %}
+      <div class="card flex-fill">
+        <div class="card-body d-flex flex-column flex-fill align-items-center">
+          <h4 class="text-body-tertiary">Total value of stock</h4>
+          <h2>{{ total_stock_value }}</h2>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+  <div class="d-flex gap-3 justify-content-center mb-2">
+    {% if product_numbers %}
+      <div class="card flex-fill w-50">
+        <h4 class="card-header">Product Numbers</h4>
+        <canvas id="product-numbers-chart"
+                data-product-numbers="{{ product_numbers }}"></canvas>
+      </div>
+    {% endif %}
+    {% if supplier_numbers %}
+      <div class="card flex-fill w-50">
+        <h4 class="card-header">Supplier Numbers</h4>
+        <canvas id="supplier-numbers-chart"
+                data-supplier-numbers="{{ supplier_numbers }}"></canvas>
+      </div>
+    {% endif %}
+  </div>
+  {% if stock_values %}
+    <div class="card w-100">
+      <h4 class="card-header">Stock Values</h4>
+      <canvas id="stock-values-chart" data-stock-values="{{ stock_values }}"></canvas>
+    </div>
+  {% endif %}
+  <!-- JS -->
+  <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const startDate = document.querySelector("#report-form-start-date");
+    const endDate = document.querySelector("#report-form-end-date");
+    const startDateUI = document.querySelector("#start-date-ui");
+    const endDateUI = document.querySelector("#end-date-ui");
+    // Chart
+    const productNumbersChart = document.querySelector(
+      "#product-numbers-chart"
+    );
+    const supplierNumbersChart = document.querySelector(
+      "#supplier-numbers-chart"
+    );
+    const stockValuesChart = document.querySelector("#stock-values-chart");
+
+    // Get data function
+    function getProductNumbers() {
+      const values = JSON.parse(
+        productNumbersChart.getAttribute("data-product-numbers")
+      );
+      const labels = Object.keys(values);
+      const data = Object.values(values);
+      return { labels, data };
+    }
+    function getSupplierNumbers() {
+      const values = JSON.parse(
+        supplierNumbersChart.getAttribute("data-supplier-numbers")
+      );
+      const labels = Object.keys(values);
+      const data = Object.values(values);
+      return { labels, data };
+    }
+    function getStockValues() {
+      const values = JSON.parse(
+        stockValuesChart.getAttribute("data-stock-values")
+      );
+      const labels = Object.keys(values);
+      const data = Object.values(values);
+      return { labels, data };
+    }
+
+    startDateUI.textContent = startDate.value;
+    endDateUI.textContent = endDate.value;
+
+    startDate.addEventListener("change", () => {
+      startDateUI.textContent = startDate.value;
+    });
+
+    endDate.addEventListener("change", () => {
+      endDateUI.textContent = endDate.value;
+    });
+
+    // Initialize date
+    startDateUI.textContent = startDate.value || "-";
+    endDateUI.textContent = endDate.value || "-";
+
+    // ChartJS
+    const { labels: productNumbersLabels, data: productNumbersData } =
+      getProductNumbers();
+    new Chart(productNumbersChart, {
+      type: "pie",
+      data: {
+        labels: productNumbersLabels,
+        datasets: [
+          {
+            data: productNumbersData,
+          },
+        ],
+      },
+    });
+
+    const { labels: supplierNumbersLabels, data: supplierNumbersData } =
+      getSupplierNumbers();
+    new Chart(supplierNumbersChart, {
+      type: "pie",
+      data: {
+        labels: supplierNumbersLabels,
+        datasets: [
+          {
+            data: supplierNumbersData,
+          },
+        ],
+      },
+    });
+
+    const { labels: stockValuesLabels, data: stockValuesData } =
+      getStockValues();
+    new Chart(stockValuesChart, {
+      type: "bar",
+      data: {
+        labels: stockValuesLabels,
+        datasets: [
+          {
+            label: "Stock Value",
+            data: stockValuesData,
+          },
+        ],
+      },
+    });
+  });
+  </script>
+{% endblock %}

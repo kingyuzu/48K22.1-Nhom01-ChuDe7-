@@ -1,0 +1,137 @@
+<table class="table" id="fi-summary-table">
+    <thead>
+        <tr>
+            <th scope="col">SKU</th>
+            <th scope="col">Name</th>
+            <th scope="col">Supplier</th>
+            <th scope="col">Unit</th>
+            <th scope="col">Quantity</th>
+            <th scope="col">Import Price</th>
+            <th scope="col">Total Price</th>
+        </tr>
+    </thead>
+    <tbody class="table-group-divider" id="fi-summary-body">
+    </tbody>
+    <!-- Summary -->
+    <tr id="fi-summary-total" class="table-dark">
+        <td colspan="4">
+            <strong>Summary</strong>
+        </td>
+        <td id="fi-summary-total-quantity" colspan="2">0</td>
+        <td>
+            <span id="fi-summary-total-price">0</span>
+        </td>
+    </tr>
+</table>
+<script>
+// Format price
+function fiFormatPrice(price) {
+    return new Intl.NumberFormat("vi-VN", {
+        style: "currency",
+        currency: "VND",
+    }).format(price);
+}
+
+// Add Summary Row Handler
+function fiInitSummaryRow(
+    id,
+    sku,
+    name,
+    supplier,
+    unit,
+    quantity,
+    importPrice,
+) {
+    const summaryBody = document.getElementById("fi-summary-body");
+
+    // Create Row
+    const row = document.createElement("tr");
+    row.setAttribute("id", "fi-summary-row-" + id);
+    row.innerHTML = `
+        <td>${sku}</td>
+        <td>${name}</td>
+        <td>${supplier}</td>
+        <td>${unit}</td>
+        <td>${quantity}</td>
+        <td>${fiFormatPrice(importPrice)}</td>
+        <td>${fiFormatPrice(quantity * importPrice)}</td>
+    `;
+
+    // Append Row
+    summaryBody.appendChild(row);
+
+    // Update Summary
+    const totalQuantity = document.getElementById("fi-summary-total-quantity");
+    const totalPrice = document.getElementById("fi-summary-total-price");
+
+    totalQuantity.innerHTML = parseInt(totalQuantity.innerHTML) + quantity;
+    totalPrice.innerHTML = fiFormatPrice(
+        parseInt(totalPrice.innerHTML.replaceAll(",", "")) + quantity * importPrice
+    );
+}
+
+// Update Row Handler
+function fiUpdateSummaryRow({
+    id,
+    sku,
+    name,
+    supplier,
+    unit,
+    quantity,
+    importPrice,
+}) {
+    const summaryBody = document.getElementById("fi-summary-body");
+
+    // Update Row
+    if (id) {
+        const row = document.getElementById("fi-summary-row-" + id);
+
+        // Update Data
+        if (sku) row.children[0].innerHTML = sku;
+        if (name) row.children[1].innerHTML = name;
+        if (supplier) row.children[2].innerHTML = supplier;
+        if (unit) row.children[3].innerHTML = unit;
+        if (quantity) row.children[4].innerHTML = quantity;
+        if (importPrice) row.children[5].innerHTML = fiFormatPrice(importPrice);
+        if (quantity && importPrice) row.children[6].innerHTML = fiFormatPrice(quantity * importPrice);
+    }
+}
+
+// Observe changed in summary body
+document.addEventListener("DOMContentLoaded", () => {
+    const observedNode = document.getElementById("fi-summary-body");
+    const summaryBody = document.getElementById("fi-summary-body");
+    const summaryTotal = document.getElementById("fi-summary-total");
+
+    const observer = new MutationObserver((mutationList, observer) => {
+        // Iterate through mutations
+        mutationList.forEach((mutation) => {
+            if (mutation.type == "childList") {
+                // Get all rows
+                const rows = summaryBody.querySelectorAll('tr')
+                let totalQuantity = 0;
+                let totalPrice = 0;
+                // Calculate total quantity and total price
+                rows.forEach((row) => {
+                    const quantityCell = row.cells[4]; // 6th column (Quantity)
+                    const totalPriceCell = row.cells[6]; // 8th column (Total Price)
+
+                    if (quantityCell && totalPriceCell) {
+                        // Parse quantity and total price
+                        const quantity = parseInt(quantityCell.textContent.trim() || '0', 10);
+                        const price = parseFloat(totalPriceCell.textContent.trim().replace(/[^0-9.]/g, '') || '0') * 1000;
+
+                        totalQuantity += quantity;
+                        totalPrice += price;
+                    }
+                });
+                // Update total
+                summaryTotal.querySelector("#fi-summary-total-quantity").textContent = totalQuantity;
+                summaryTotal.querySelector("#fi-summary-total-price").textContent = fiFormatPrice(totalPrice);
+            }
+        })
+    })
+
+    observer.observe(observedNode, { childList: true, subtree: true });
+});
+</script>
